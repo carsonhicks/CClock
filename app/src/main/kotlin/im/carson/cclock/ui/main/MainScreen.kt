@@ -48,7 +48,7 @@ fun MainScreen() {
   val ring = Planner.nextRing(state, now)
   BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
     // The clock takes the top of the first screen, with sleep and alarms visible below.
-    val clockHeight = maxHeight * 0.4f
+    val clockHeight = maxHeight * 0.3f
     Column(
       modifier = Modifier
         .fillMaxSize()

@@ -83,14 +83,14 @@ object ClockStore {
     state.copy(snooze = Snooze(System.currentTimeMillis() + Planner.SNOOZE.toMillis(), label))
   }
 
-  /** Marks a ring as handled, whether it rang or was skipped, so it won't ring again. */
+  /** Marks a ring as handled, whether it rang or was skipped, so it won't ring again. One-time alarms are deleted. */
   fun finish(context: Context, key: String, alarmId: String?) = edit(context) { state ->
     if (key == Planner.SNOOZE_KEY) {
       state.copy(snooze = null)
     } else {
       state.copy(
         done = state.done + key,
-        alarms = state.alarms.map { if (it.id == alarmId && it.days.isEmpty()) it.copy(enabled = false) else it },
+        alarms = state.alarms.filter { it.id != alarmId || it.days.isNotEmpty() },
       )
     }
   }

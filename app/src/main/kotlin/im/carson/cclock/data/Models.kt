@@ -25,7 +25,7 @@ data class SleepOverride(val wakeDate: String, val bedtime: Int? = null, val wak
   val isEmpty get() = bedtime == null && alarm == null
 }
 
-/** A standalone alarm. Empty [days] means it rings once and then turns itself off. */
+/** A standalone alarm. Empty [days] means it rings once and then deletes itself. */
 @Serializable
 data class Alarm(
   val id: String = UUID.randomUUID().toString(),
