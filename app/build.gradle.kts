@@ -1,3 +1,5 @@
+import com.android.build.api.artifact.SingleArtifact
+
 plugins {
   alias(libs.plugins.android.application)
   alias(libs.plugins.compose.compiler)
@@ -44,6 +46,23 @@ android {
 
 kotlin {
   jvmToolchain(17)
+}
+
+// Every release build also leaves a copy of its APK at build/outputs/apk/CClock.apk.
+androidComponents {
+  onVariants(selector().withBuildType("release")) { variant ->
+    val apkDir = variant.artifacts.get(SingleArtifact.APK)
+    val named = layout.buildDirectory.file("outputs/apk/CClock.apk")
+    val copy = tasks.register("copyReleaseApk") {
+      inputs.dir(apkDir)
+      outputs.file(named)
+      doLast {
+        val apk = apkDir.get().asFile.listFiles { file -> file.extension == "apk" }!!.single()
+        apk.copyTo(named.get().asFile, overwrite = true)
+      }
+    }
+    tasks.matching { it.name == "assembleRelease" }.configureEach { finalizedBy(copy) }
+  }
 }
 
 dependencies {
