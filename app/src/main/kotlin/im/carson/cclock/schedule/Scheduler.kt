@@ -9,7 +9,7 @@ import im.carson.cclock.MainActivity
 import im.carson.cclock.data.ClockStore
 import java.time.ZonedDateTime
 
-/** Turns the plan into AlarmManager alarms, sleep mode state, and the upcoming-alarm notification. */
+/** Turns the plan into AlarmManager alarms, sleep mode state, and CClock's ongoing notifications. */
 object Scheduler {
   private const val TAG = "Scheduler"
 
@@ -35,6 +35,17 @@ object Scheduler {
     } else {
       Notifications.cancelUpcoming(context)
     }
+
+    // Timers aren't alarms, so they skip setAlarmClock and stay out of the system's next-alarm display.
+    val timerIntent = ClockReceiver.pendingIntent(context, ClockReceiver.ACTION_TIMER_DONE)
+    val timerEnd = state.timer?.endsAt
+    if (timerEnd == null) {
+      alarmManager.cancel(timerIntent)
+    } else {
+      tryExact { alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, timerEnd, timerIntent) }
+    }
+    Notifications.updateTimer(context, state.timer)
+    Notifications.updateStopwatch(context, state.stopwatch)
 
     // Wake up again when sleep starts or ends (a night without an alarm has no ring to end it),
     // or when the upcoming notification is due.

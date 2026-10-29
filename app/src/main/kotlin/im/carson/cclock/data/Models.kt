@@ -38,6 +38,25 @@ data class Alarm(
 @Serializable
 data class Snooze(val at: Long, val label: String)
 
+// Timer and stopwatch times are epoch milliseconds and durations in milliseconds.
+
+/** A countdown of [duration]. Running while [endsAt] is set, otherwise paused with [remaining] left. */
+@Serializable
+data class Timer(val duration: Long, val endsAt: Long? = null, val remaining: Long = duration) {
+  val isRunning get() = endsAt != null
+
+  fun remainingAt(now: Long) = endsAt?.let { maxOf(0L, it - now) } ?: remaining
+}
+
+/** Running while [runningSince] is set. [laps] are the total elapsed times when each lap ended. */
+@Serializable
+data class Stopwatch(val runningSince: Long? = null, val elapsed: Long = 0, val laps: List<Long> = emptyList()) {
+  val isRunning get() = runningSince != null
+  val isReset get() = !isRunning && elapsed == 0L
+
+  fun elapsedAt(now: Long) = elapsed + (runningSince?.let { maxOf(0L, now - it) } ?: 0L)
+}
+
 @Serializable
 data class ClockState(
   val sleepEnabled: Boolean = false,
@@ -47,4 +66,8 @@ data class ClockState(
   /** Keys of ring occurrences that already rang or were skipped. */
   val done: Set<String> = emptySet(),
   val snooze: Snooze? = null,
+  val timer: Timer? = null,
+  /** The last timer length started, offered again next time. */
+  val lastTimer: Long = 5 * 60_000L,
+  val stopwatch: Stopwatch = Stopwatch(),
 )

@@ -7,19 +7,15 @@ import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBarsPadding
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -30,6 +26,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import im.carson.cclock.schedule.Planner
+import im.carson.cclock.ui.components.BigButton
 import im.carson.cclock.ui.components.rememberNow
 import im.carson.cclock.ui.main.ClockFace
 import im.carson.cclock.ui.theme.CClockTheme
@@ -72,21 +69,8 @@ private fun AlarmScreen(label: String, onSnooze: () -> Unit, onStop: () -> Unit)
     Text(label, style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.secondary)
     Spacer(Modifier.weight(1f))
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-      val border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
-      OutlinedButton(onClick = onSnooze, modifier = Modifier.weight(1f).height(64.dp), border = border) {
-        Text("Snooze ${Planner.SNOOZE.toMinutes()} min", style = MaterialTheme.typography.titleMedium)
-      }
-      OutlinedButton(
-        onClick = onStop,
-        modifier = Modifier.weight(1f).height(64.dp),
-        border = border,
-        colors = ButtonDefaults.outlinedButtonColors(
-          containerColor = MaterialTheme.colorScheme.primary,
-          contentColor = MaterialTheme.colorScheme.onPrimary,
-        ),
-      ) {
-        Text("Stop", style = MaterialTheme.typography.titleMedium)
-      }
+      BigButton("Snooze ${Planner.SNOOZE.toMinutes()} min", modifier = Modifier.weight(1f), onClick = onSnooze)
+      BigButton("Stop", modifier = Modifier.weight(1f), filled = true, onClick = onStop)
     }
   }
 }

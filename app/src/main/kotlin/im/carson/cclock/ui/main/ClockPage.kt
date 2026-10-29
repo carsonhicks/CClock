@@ -1,6 +1,7 @@
 package im.carson.cclock.ui.main
 
 import android.text.format.DateFormat
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -10,7 +11,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
@@ -23,7 +24,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import im.carson.cclock.MainActivity
 import im.carson.cclock.data.ClockStore
+import im.carson.cclock.formatElapsed
+import im.carson.cclock.formatRemaining
 import im.carson.cclock.schedule.Planner
 import im.carson.cclock.ui.alarms.AlarmsSection
 import im.carson.cclock.ui.components.PermissionRows
@@ -38,9 +42,9 @@ import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
-/** Everything on one scrolling page: the clock up top, then sleep and alarms underneath. */
+/** The clock up top, then sleep and alarms underneath, on one scrolling page. */
 @Composable
-fun MainScreen() {
+fun ClockPage(onOpenPage: (Int) -> Unit) {
   val context = LocalContext.current
   val now = rememberNow()
   val state by ClockStore.state.collectAsState()
@@ -53,7 +57,7 @@ fun MainScreen() {
       modifier = Modifier
         .fillMaxSize()
         .verticalScroll(rememberScrollState())
-        .systemBarsPadding()
+        .statusBarsPadding()
         .padding(horizontal = 24.dp),
     ) {
       Column(
@@ -79,6 +83,16 @@ fun MainScreen() {
             }
           }
         }
+        // A running timer or stopwatch, tapping through to its page.
+        val millis = now.toInstant().toEpochMilli()
+        state.timer?.let { timer ->
+          val status = if (timer.isRunning) "left" else "paused"
+          RunningLine("Timer · ${formatRemaining(timer.remainingAt(millis))} $status") { onOpenPage(MainActivity.PAGE_TIMER) }
+        }
+        state.stopwatch.takeIf { !it.isReset }?.let { stopwatch ->
+          val status = if (stopwatch.isRunning) "" else " paused"
+          RunningLine("Stopwatch · ${formatElapsed(stopwatch.elapsedAt(millis))}$status") { onOpenPage(MainActivity.PAGE_STOPWATCH) }
+        }
       }
       PermissionRows(includeSleep = state.sleepEnabled)
       SleepSection(state, now)
@@ -86,6 +100,15 @@ fun MainScreen() {
       Spacer(Modifier.height(32.dp))
     }
   }
+}
+
+@Composable
+private fun RunningLine(text: String, onClick: () -> Unit) {
+  Text(
+    text,
+    modifier = Modifier.clickable(onClick = onClick).padding(horizontal = 8.dp, vertical = 2.dp),
+    color = MaterialTheme.colorScheme.secondary,
+  )
 }
 
 @Composable

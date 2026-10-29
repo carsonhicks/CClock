@@ -23,6 +23,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -33,9 +34,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameMillis
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -62,6 +65,17 @@ fun rememberNow(): ZonedDateTime {
       delay(1000 - System.currentTimeMillis() % 1000)
       now = ZonedDateTime.now()
     }
+  }
+  return now
+}
+
+/** Epoch milliseconds, updated every frame while [live] so running readouts stay smooth. */
+@Composable
+fun rememberMillis(live: Boolean): Long {
+  var now by remember { mutableLongStateOf(System.currentTimeMillis()) }
+  LaunchedEffect(live) {
+    now = System.currentTimeMillis()
+    while (live) withFrameMillis { now = System.currentTimeMillis() }
   }
   return now
 }
@@ -100,6 +114,30 @@ fun SectionHeader(text: String) {
     style = MaterialTheme.typography.labelLarge,
     color = MaterialTheme.colorScheme.tertiary,
   )
+}
+
+/** A large outlined button; [filled] marks the main action with white. */
+@Composable
+fun BigButton(text: String, modifier: Modifier = Modifier, filled: Boolean = false, enabled: Boolean = true, onClick: () -> Unit) {
+  val colors = MaterialTheme.colorScheme
+  OutlinedButton(
+    onClick = onClick,
+    modifier = modifier.height(64.dp),
+    enabled = enabled,
+    border = BorderStroke(1.dp, colors.outline),
+    colors = if (filled) {
+      ButtonDefaults.outlinedButtonColors(
+        containerColor = colors.primary,
+        contentColor = colors.onPrimary,
+        disabledContainerColor = colors.tertiary,
+        disabledContentColor = colors.onPrimary,
+      )
+    } else {
+      ButtonDefaults.outlinedButtonColors(contentColor = colors.onBackground, disabledContentColor = colors.tertiary)
+    },
+  ) {
+    Text(text, style = MaterialTheme.typography.titleMedium)
+  }
 }
 
 @Composable

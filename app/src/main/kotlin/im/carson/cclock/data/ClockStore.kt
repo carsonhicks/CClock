@@ -94,4 +94,37 @@ object ClockStore {
       )
     }
   }
+
+  fun startTimer(context: Context, duration: Long) = edit(context) { state ->
+    state.copy(timer = Timer(duration, endsAt = System.currentTimeMillis() + duration), lastTimer = duration)
+  }
+
+  fun pauseTimer(context: Context) = editTimer(context) { it.copy(endsAt = null, remaining = it.remainingAt(System.currentTimeMillis())) }
+
+  fun resumeTimer(context: Context) = editTimer(context) { it.copy(endsAt = System.currentTimeMillis() + it.remaining) }
+
+  fun addToTimer(context: Context, millis: Long) = editTimer(context) {
+    it.copy(duration = it.duration + millis, endsAt = it.endsAt?.plus(millis), remaining = it.remaining + millis)
+  }
+
+  /** Clears the timer, whether cancelled or done ringing. */
+  fun clearTimer(context: Context) = edit(context) { it.copy(timer = null) }
+
+  private fun editTimer(context: Context, change: (Timer) -> Timer) = edit(context) { state ->
+    state.copy(timer = state.timer?.let(change))
+  }
+
+  fun startStopwatch(context: Context) = editStopwatch(context) { it.copy(runningSince = System.currentTimeMillis()) }
+
+  fun pauseStopwatch(context: Context) = editStopwatch(context) {
+    Stopwatch(elapsed = it.elapsedAt(System.currentTimeMillis()), laps = it.laps)
+  }
+
+  fun lapStopwatch(context: Context) = editStopwatch(context) { it.copy(laps = it.laps + it.elapsedAt(System.currentTimeMillis())) }
+
+  fun resetStopwatch(context: Context) = editStopwatch(context) { Stopwatch() }
+
+  private fun editStopwatch(context: Context, change: (Stopwatch) -> Stopwatch) = edit(context) { state ->
+    state.copy(stopwatch = change(state.stopwatch))
+  }
 }

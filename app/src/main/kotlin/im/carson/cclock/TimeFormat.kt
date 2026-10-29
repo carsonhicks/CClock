@@ -27,6 +27,21 @@ fun formatDuration(minutes: Int): String {
   }
 }
 
+/** A timer or stopwatch reading: "1:02:03" with hours, "2:03" without. */
+fun formatElapsed(millis: Long): String {
+  val seconds = millis / 1000
+  val h = seconds / 3600
+  val m = seconds / 60 % 60
+  val s = seconds % 60
+  return if (h > 0) "%d:%02d:%02d".format(h, m, s) else "%d:%02d".format(m, s)
+}
+
+/** Time left on a timer, rounded up so it reads 0:00 only when it's done. */
+fun formatRemaining(millis: Long) = formatElapsed((millis + 999) / 1000 * 1000)
+
+/** Hundredths of a second, for the stopwatch: ".07". */
+fun formatHundredths(millis: Long) = ".%02d".format(millis / 10 % 100)
+
 /** The week starting on the locale's first day. */
 fun orderedWeek(): List<DayOfWeek> {
   val first = WeekFields.of(Locale.getDefault()).firstDayOfWeek
