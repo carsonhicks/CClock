@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">CClock</string>
+    <string name="sleep_mode_name">CClock Sleep</string>
+    <string name="sleep_mode_trigger">Your CClock sleep schedule</string>
+    <string name="sleep_mode_on">Sleeping</string>
+    <string name="sleep_mode_off">Awake</string>
+</resources>
