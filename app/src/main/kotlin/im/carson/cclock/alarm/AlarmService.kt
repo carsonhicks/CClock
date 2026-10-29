@@ -22,6 +22,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
+data class Ringing(val label: String, val canSnooze: Boolean)
+
 /** Plays the alarm sound and vibration in the foreground until snoozed or stopped. */
 class AlarmService : Service() {
   private var player: MediaPlayer? = null
@@ -30,10 +32,10 @@ class AlarmService : Service() {
   override fun onBind(intent: Intent?): IBinder? = null
 
   override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-    val label = intent?.getStringExtra(EXTRA_LABEL) ?: "Alarm"
-    _ringing.value = label
+    val ringing = Ringing(intent?.getStringExtra(EXTRA_LABEL) ?: "Alarm", intent?.getBooleanExtra(EXTRA_CAN_SNOOZE, true) ?: true)
+    _ringing.value = ringing
     ServiceCompat.startForeground(
-      this, Notifications.ID_RINGING, Notifications.ringing(this, label), ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK,
+      this, Notifications.ID_RINGING, Notifications.ringing(this, ringing), ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK,
     )
     if (player == null) startSound()
     if (vibrator == null) startVibration()
@@ -81,14 +83,19 @@ class AlarmService : Service() {
   companion object {
     private const val TAG = "AlarmService"
     private const val EXTRA_LABEL = "label"
+    private const val EXTRA_CAN_SNOOZE = "can_snooze"
 
-    private val _ringing = MutableStateFlow<String?>(null)
+    private val _ringing = MutableStateFlow<Ringing?>(null)
 
-    /** Label of the alarm that's ringing, or null when nothing is. */
-    val ringing: StateFlow<String?> = _ringing.asStateFlow()
+    /** What's ringing, or null when nothing is. */
+    val ringing: StateFlow<Ringing?> = _ringing.asStateFlow()
 
-    fun start(context: Context, label: String) {
-      ContextCompat.startForegroundService(context, Intent(context, AlarmService::class.java).putExtra(EXTRA_LABEL, label))
+    /** Starts ringing. Timers pass [canSnooze] false, since snoozing a timer doesn't make sense. */
+    fun start(context: Context, label: String, canSnooze: Boolean = true) {
+      ContextCompat.startForegroundService(
+        context,
+        Intent(context, AlarmService::class.java).putExtra(EXTRA_LABEL, label).putExtra(EXTRA_CAN_SNOOZE, canSnooze),
+      )
     }
 
     fun stop(context: Context) {
@@ -96,7 +103,7 @@ class AlarmService : Service() {
     }
 
     fun snooze(context: Context) {
-      ringing.value?.let { ClockStore.snooze(context, it) }
+      ringing.value?.takeIf { it.canSnooze }?.let { ClockStore.snooze(context, it.label) }
       stop(context)
     }
   }

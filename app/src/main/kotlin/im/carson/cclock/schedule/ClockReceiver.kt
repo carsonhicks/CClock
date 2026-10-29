@@ -27,7 +27,7 @@ class ClockReceiver : BroadcastReceiver() {
         val endsAt = timer.endsAt ?: return
         if (endsAt > System.currentTimeMillis() + 1000) return Scheduler.reschedule(context)
         ClockStore.clearTimer(context)
-        AlarmService.start(context, "Timer · ${formatElapsed(timer.duration)}")
+        AlarmService.start(context, "Timer · ${formatElapsed(timer.duration)}", canSnooze = false)
       }
       ACTION_TIMER_PAUSE -> ClockStore.pauseTimer(context)
       ACTION_TIMER_RESUME -> ClockStore.resumeTimer(context)

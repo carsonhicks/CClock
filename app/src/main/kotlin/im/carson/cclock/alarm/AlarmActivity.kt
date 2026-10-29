@@ -44,12 +44,12 @@ class AlarmActivity : ComponentActivity() {
     )
     setContent {
       CClockTheme {
-        val label by AlarmService.ringing.collectAsState()
-        LaunchedEffect(label) { if (label == null) finish() }
+        val ringing by AlarmService.ringing.collectAsState()
+        LaunchedEffect(ringing) { if (ringing == null) finish() }
         Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
           AlarmScreen(
-            label = label.orEmpty(),
-            onSnooze = { AlarmService.snooze(this) },
+            label = ringing?.label.orEmpty(),
+            onSnooze = if (ringing?.canSnooze != false) ({ AlarmService.snooze(this) }) else null,
             onStop = { AlarmService.stop(this) },
           )
         }
@@ -59,7 +59,7 @@ class AlarmActivity : ComponentActivity() {
 }
 
 @Composable
-private fun AlarmScreen(label: String, onSnooze: () -> Unit, onStop: () -> Unit) {
+private fun AlarmScreen(label: String, onSnooze: (() -> Unit)?, onStop: () -> Unit) {
   Column(
     modifier = Modifier.fillMaxSize().systemBarsPadding().padding(24.dp),
     horizontalAlignment = Alignment.CenterHorizontally,
@@ -69,7 +69,9 @@ private fun AlarmScreen(label: String, onSnooze: () -> Unit, onStop: () -> Unit)
     Text(label, style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.secondary)
     Spacer(Modifier.weight(1f))
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-      BigButton("Snooze ${Planner.SNOOZE.toMinutes()} min", modifier = Modifier.weight(1f), onClick = onSnooze)
+      if (onSnooze != null) {
+        BigButton("Snooze ${Planner.SNOOZE.toMinutes()} min", modifier = Modifier.weight(1f), onClick = onSnooze)
+      }
       BigButton("Stop", modifier = Modifier.weight(1f), filled = true, onClick = onStop)
     }
   }

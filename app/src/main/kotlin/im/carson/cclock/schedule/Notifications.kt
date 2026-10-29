@@ -12,6 +12,7 @@ import androidx.core.app.NotificationCompat
 import im.carson.cclock.MainActivity
 import im.carson.cclock.R
 import im.carson.cclock.alarm.AlarmActivity
+import im.carson.cclock.alarm.Ringing
 import im.carson.cclock.data.Stopwatch
 import im.carson.cclock.data.Timer
 import im.carson.cclock.formatElapsed
@@ -39,24 +40,25 @@ object Notifications {
     context.getSystemService(NotificationManager::class.java).createNotificationChannels(listOf(ringing, upcoming, running))
   }
 
-  fun ringing(context: Context, label: String): Notification {
+  fun ringing(context: Context, ringing: Ringing): Notification {
     val fullScreen = PendingIntent.getActivity(
       context, 0,
       Intent(context, AlarmActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_USER_ACTION),
       PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
     )
-    return NotificationCompat.Builder(context, CHANNEL_RINGING)
+    val builder = NotificationCompat.Builder(context, CHANNEL_RINGING)
       .setSmallIcon(R.drawable.ic_alarm)
-      .setContentTitle(label)
+      .setContentTitle(ringing.label)
       .setCategory(NotificationCompat.CATEGORY_ALARM)
       .setPriority(NotificationCompat.PRIORITY_MAX)
       .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
       .setOngoing(true)
       .setFullScreenIntent(fullScreen, true)
       .setContentIntent(fullScreen)
-      .addAction(0, "Snooze ${Planner.SNOOZE.toMinutes()} min", ClockReceiver.pendingIntent(context, ClockReceiver.ACTION_SNOOZE))
-      .addAction(0, "Stop", ClockReceiver.pendingIntent(context, ClockReceiver.ACTION_STOP))
-      .build()
+    if (ringing.canSnooze) {
+      builder.addAction(0, "Snooze ${Planner.SNOOZE.toMinutes()} min", ClockReceiver.pendingIntent(context, ClockReceiver.ACTION_SNOOZE))
+    }
+    return builder.addAction(0, "Stop", ClockReceiver.pendingIntent(context, ClockReceiver.ACTION_STOP)).build()
   }
 
   fun showUpcoming(context: Context, ring: Ring) {
